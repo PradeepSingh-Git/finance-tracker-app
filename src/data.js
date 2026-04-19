@@ -17,10 +17,11 @@ async function loadHoldings() {
 }
 
 async function addHolding(entry) {
-  const { data: { user } } = await sbClient.auth.getUser();
+  const { data: { session } } = await sbClient.auth.getSession();
+  if (!session) { console.error('addHolding: no active session'); return null; }
   const { data, error } = await sbClient
     .from('holdings')
-    .insert({ ...entry, user_id: user.id })
+    .insert({ ...entry, user_id: session.user.id })
     .select()
     .single();
 
