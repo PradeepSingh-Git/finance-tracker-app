@@ -2,12 +2,13 @@
    charts.js — Chart.js chart renderers
    ============================================= */
 
-let pieChart, lineChart, barChart;
+let pieChart, lineChart, barChart, debtBarChart;
 
 function resizeCharts() {
-  if (pieChart)  pieChart.resize();
-  if (lineChart) lineChart.resize();
-  if (barChart)  barChart.resize();
+  if (pieChart)     pieChart.resize();
+  if (lineChart)    lineChart.resize();
+  if (barChart)     barChart.resize();
+  if (debtBarChart) debtBarChart.resize();
 }
 
 const CHART_COLORS = ['#1D9E75', '#378ADD', '#D85A30', '#EF9F27', '#7F77DD', '#5DCAA5'];
@@ -87,7 +88,7 @@ function renderLineChart() {
   });
 }
 
-// ── Bar — value by institution ─────────────────
+// ── Bar — assets by institution ────────────────
 function renderBarChart() {
   const instMap = {};
   holdings
@@ -104,6 +105,55 @@ function renderBarChart() {
 
   if (barChart) barChart.destroy();
   barChart = new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderRadius: 4,
+        borderSkipped: false,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` €${fmt(ctx.raw)}` } },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: {
+          grid: { color: 'rgba(136,135,128,0.12)' },
+          ticks: { callback: v => '€' + fmt(v), font: { size: 11 } },
+        },
+      },
+    },
+  });
+}
+
+// ── Bar — debt & loans by institution ─────────
+function renderDebtBarChart() {
+  const instMap = {};
+  holdings
+    .filter(h => h.type === 'debt' || h.type === 'loan')
+    .forEach(h => { instMap[h.institution] = (instMap[h.institution] || 0) + h.value; });
+
+  const labels = Object.keys(instMap);
+  const values = labels.map(k => Math.round(instMap[k]));
+  const colors = labels.map(() => '#D85A30');
+
+  const card = document.getElementById('debt-bar-card');
+  if (labels.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  document.getElementById('debt-bar-legend').innerHTML = labels
+    .map((l, i) => `<span class="legend-item"><span class="legend-dot" style="background:${colors[i]}"></span>${l}</span>`)
+    .join('');
+
+  if (debtBarChart) debtBarChart.destroy();
+  debtBarChart = new Chart(document.getElementById('debtBarChart'), {
     type: 'bar',
     data: {
       labels,

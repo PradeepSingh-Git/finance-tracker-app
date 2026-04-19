@@ -62,6 +62,7 @@ function renderDashboard() {
     renderPieChart();
     renderLineChart();
     renderBarChart();
+    renderDebtBarChart();
     resizeCharts();
   }, 50);
 }
