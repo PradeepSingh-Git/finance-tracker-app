@@ -107,7 +107,9 @@ async function addEntry() {
     return;
   }
 
-  await addHolding({ name, type, institution, value, notes });
+  const ok = await addHolding({ name, type, institution, value, notes });
+  if (!ok) { alert('Failed to save. Check the browser console.'); return; }
+  await loadHoldings();
 
   ['f-name', 'f-institution', 'f-value', 'f-notes'].forEach(id => {
     document.getElementById(id).value = '';

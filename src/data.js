@@ -20,16 +20,12 @@ async function addHolding(entry) {
   const { data: { session } } = await sbClient.auth.getSession();
   if (!session) { console.error('addHolding: no active session'); return null; }
 
-  const { data, error } = await sbClient
+  const { error } = await sbClient
     .from('holdings')
-    .insert({ ...entry, user_id: session.user.id })
-    .select();
+    .insert({ ...entry, user_id: session.user.id });
 
   if (error) { console.error('addHolding:', error); return null; }
-
-  const row = data && data[0];
-  if (row) holdings.push(row);
-  return row || null;
+  return true;
 }
 
 async function deleteHolding(id) {

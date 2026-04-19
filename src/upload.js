@@ -173,8 +173,7 @@ async function saveExtracted() {
       <div class="ai-result" style="color:var(--c-accent-dark);">
         <strong>✓ Saved to portfolio!</strong> Switch to the Dashboard to see your updated overview.
       </div>`;
-    renderDashboard();
-    renderRecent();
+    loadHoldings().then(() => { renderDashboard(); renderRecent(); });
   } catch (err) {
     saveBtn.disabled = false;
     saveBtn.textContent = 'Save to portfolio';
