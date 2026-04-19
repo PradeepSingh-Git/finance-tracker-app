@@ -9,6 +9,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // ──────────────────────────────────────────────
 
 let sbClient = null;
+let authBootstrapped = false;
 
 function initSupabase() {
   sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -72,33 +73,67 @@ function setAuthMessage(text, isError = false) {
   el.style.display = text ? 'block' : 'none';
 }
 
-async function logout() {
-  if (sbClient) await sbClient.auth.signOut();
-  window.location.reload();
+function clearSupabaseSessionStorage() {
+  Object.keys(localStorage)
+    .filter(key => key.startsWith('sb-') && key.endsWith('-auth-token'))
+    .forEach(key => localStorage.removeItem(key));
+}
+
+function resetSignedOutUi() {
+  authBootstrapped = false;
+  holdings = [];
+  document.getElementById('user-email').textContent = '';
+  document.getElementById('auth-overlay').style.display = 'flex';
+  showAuthScreen();
+}
+
+async function signOutUser() {
+  if (!sbClient) return;
+
+  clearSupabaseSessionStorage();
+  resetSignedOutUi();
+
+  // Attempt the official sign-out in the background, but don't block the UI on it.
+  sbClient.auth.signOut({ scope: 'local' }).catch(err => {
+    console.error('signOutUser:', err);
+  });
+}
+
+async function startAuthenticatedSession(session) {
+  if (!session || authBootstrapped) return;
+  authBootstrapped = true;
+
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.getElementById('user-email').textContent = session.user.email;
+
+  // Show the dashboard shell immediately, then hydrate it once holdings finish loading.
+  switchTab('dashboard');
+
+  await loadHoldings();
+  renderRecent();
+  renderDashboard();
+  setTimeout(renderDashboard, 120);
 }
 
 // ── Init ───────────────────────────────────────
 async function initAuth() {
   initSupabase();
 
-  let sessionStarted = false;
+  const signOutButton = document.getElementById('signout-button');
+  if (signOutButton) signOutButton.onclick = signOutUser;
 
   sbClient.auth.onAuthStateChange(async (event, session) => {
-    if (session && !sessionStarted) {
-      sessionStarted = true;
-      document.getElementById('auth-overlay').style.display = 'none';
-      document.getElementById('user-email').textContent = session.user.email;
-      await loadHoldings();
-      renderRecent();
-      setTimeout(renderDashboard, 100);
+    if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && session) {
+      await startAuthenticatedSession(session);
     } else if (event === 'SIGNED_OUT') {
-      sessionStarted = false;
-      holdings = [];
-      document.getElementById('user-email').textContent = '';
-      document.getElementById('auth-overlay').style.display = 'flex';
-      showAuthScreen();
-    } else if (!session && !sessionStarted) {
-      showAuthScreen();
+      resetSignedOutUi();
     }
   });
+
+  const { data: { session } } = await sbClient.auth.getSession();
+  if (session) {
+    await startAuthenticatedSession(session);
+  } else {
+    showAuthScreen();
+  }
 }
