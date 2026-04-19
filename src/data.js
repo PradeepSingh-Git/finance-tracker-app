@@ -4,9 +4,17 @@
 
 // ── State ──────────────────────────────────────
 let holdings = [];
-let currentUserId = null;
+let _sbUserId      = null;
+let _sbUrl         = '';
+let _sbAnonKey     = '';
+let _sbAccessToken = '';
 
-function setCurrentUserId(id) { currentUserId = id; }
+function setCurrentUser(userId, supabaseUrl, anonKey, accessToken) {
+  _sbUserId      = userId;
+  _sbUrl         = supabaseUrl;
+  _sbAnonKey     = anonKey;
+  _sbAccessToken = accessToken;
+}
 
 // ── Persistence (Supabase) ─────────────────────
 async function loadHoldings() {
@@ -19,15 +27,43 @@ async function loadHoldings() {
   holdings = data || [];
 }
 
+// Direct fetch for INSERT — bypasses the Supabase JS client's
+// internal token-refresh path which can hang indefinitely.
 async function addHolding(entry) {
-  if (!currentUserId) { console.error('addHolding: no user id'); return null; }
+  if (!_sbUserId || !_sbUrl) {
+    console.error('addHolding: user not initialised');
+    return null;
+  }
 
-  const { error } = await sbClient
-    .from('holdings')
-    .insert({ ...entry, user_id: currentUserId });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
 
-  if (error) { console.error('addHolding:', error); return null; }
-  return true;
+  try {
+    const response = await fetch(`${_sbUrl}/rest/v1/holdings`, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': _sbAnonKey,
+        'Authorization': `Bearer ${_sbAccessToken}`,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ ...entry, user_id: _sbUserId }),
+    });
+
+    clearTimeout(timer);
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      console.error('addHolding HTTP error:', response.status, err);
+      return null;
+    }
+    return true;
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.name === 'AbortError') throw new Error('Network request timed out after 20 s');
+    throw err;
+  }
 }
 
 async function deleteHolding(id) {

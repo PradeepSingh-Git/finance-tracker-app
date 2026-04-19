@@ -156,15 +156,8 @@ async function saveExtracted() {
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving…';
 
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Request timed out — check your network and try again.')), 15000)
-  );
-
   try {
-    const result = await Promise.race([
-      addHolding({ name, type, institution, value, notes }),
-      timeout,
-    ]);
+    const result = await addHolding({ name, type, institution, value, notes });
     if (!result) throw new Error('Insert failed — open the browser console for details.');
 
     saveBtn.disabled = false;

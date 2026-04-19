@@ -103,7 +103,7 @@ async function startAuthenticatedSession(session) {
   if (!session || authBootstrapped) return;
   authBootstrapped = true;
 
-  setCurrentUserId(session.user.id);
+  setCurrentUser(session.user.id, SUPABASE_URL, SUPABASE_ANON_KEY, session.access_token);
   document.getElementById('auth-overlay').style.display = 'none';
   document.getElementById('user-email').textContent = session.user.email;
 
