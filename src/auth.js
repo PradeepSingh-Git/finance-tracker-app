@@ -107,6 +107,13 @@ async function startAuthenticatedSession(session) {
   document.getElementById('auth-overlay').style.display = 'none';
   document.getElementById('user-email').textContent = session.user.email;
 
+  const rawName    = session.user.email.split('@')[0];
+  const name       = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+  const hour       = new Date().getHours();
+  const timeOfDay  = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night';
+  document.getElementById('greeting').textContent       = `${timeOfDay}, ${name}!`;
+  document.getElementById('portfolio-title').textContent = `${name}'s Portfolio`;
+
   // Show the dashboard shell immediately, then hydrate it once holdings finish loading.
   switchTab('dashboard');
 
