@@ -103,6 +103,7 @@ async function startAuthenticatedSession(session) {
   if (!session || authBootstrapped) return;
   authBootstrapped = true;
 
+  setCurrentUserId(session.user.id);
   document.getElementById('auth-overlay').style.display = 'none';
   document.getElementById('user-email').textContent = session.user.email;
 

@@ -140,7 +140,8 @@ async function saveExtracted() {
   const name        = document.getElementById('ex-name').value.trim();
   const type        = document.getElementById('ex-type').value;
   const institution = document.getElementById('ex-institution').value.trim();
-  const value       = parseFloat(document.getElementById('ex-value').value);
+  const rawVal      = document.getElementById('ex-value').value.replace(',', '.');
+  const value       = parseFloat(rawVal);
   const notes       = document.getElementById('ex-notes').value.trim();
   const saveBtn     = document.querySelector('#extracted-form-card .btn-primary');
   const errEl       = document.getElementById('save-error');

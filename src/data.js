@@ -4,6 +4,9 @@
 
 // ── State ──────────────────────────────────────
 let holdings = [];
+let currentUserId = null;
+
+function setCurrentUserId(id) { currentUserId = id; }
 
 // ── Persistence (Supabase) ─────────────────────
 async function loadHoldings() {
@@ -17,12 +20,11 @@ async function loadHoldings() {
 }
 
 async function addHolding(entry) {
-  const { data: { session } } = await sbClient.auth.getSession();
-  if (!session) { console.error('addHolding: no active session'); return null; }
+  if (!currentUserId) { console.error('addHolding: no user id'); return null; }
 
   const { error } = await sbClient
     .from('holdings')
-    .insert({ ...entry, user_id: session.user.id });
+    .insert({ ...entry, user_id: currentUserId });
 
   if (error) { console.error('addHolding:', error); return null; }
   return true;
