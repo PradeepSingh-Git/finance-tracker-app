@@ -163,22 +163,69 @@ function renderHoldings() {
   document.getElementById('holdings-body').innerHTML = filtered.map(h => {
     const isLiability = h.type === 'debt' || h.type === 'loan';
     return `
-      <tr>
-        <td data-label="Name">
-          <span style="font-weight:500;">${h.name}</span>
-          ${h.notes ? `<br><span style="font-size:11px;color:var(--c-muted);">${h.notes}</span>` : ''}
-        </td>
-        <td data-label="Type"><span class="type-badge badge-${h.type}">${h.type}</span></td>
-        <td data-label="Institution">${h.institution}</td>
-        <td data-label="Value" style="text-align:right;font-weight:500;color:${isLiability ? 'var(--c-debt)' : 'var(--c-text)'};">
+      <tr id="row-${h.id}">
+        <td><span style="font-weight:500;">${h.name}</span></td>
+        <td><span class="type-badge badge-${h.type}">${h.type}</span></td>
+        <td>${h.institution}</td>
+        <td style="text-align:right;font-weight:500;color:${isLiability ? 'var(--c-debt)' : 'var(--c-text)'};">
           ${isLiability ? '−' : ''}€${fmt(h.value)}
         </td>
-        <td data-label="Actions" style="text-align:center;">
+        <td style="color:var(--c-muted);font-size:12px;">${h.notes || '—'}</td>
+        <td style="text-align:center;white-space:nowrap;">
+          <button class="btn-edit" onclick="editHolding(${h.id})" title="Edit entry">✎</button>
           <button class="btn-delete" onclick="removeHolding(${h.id})" title="Delete entry">×</button>
         </td>
       </tr>
     `;
   }).join('');
+}
+
+function editHolding(id) {
+  const h = holdings.find(x => x.id === id);
+  if (!h) return;
+  const typeOptions = ['investment', 'savings', 'debt', 'loan']
+    .map(t => `<option value="${t}" ${h.type === t ? 'selected' : ''}>${t}</option>`)
+    .join('');
+  document.getElementById(`row-${id}`).innerHTML = `
+    <td><input class="tbl-input" value="${h.name}" id="ei-name-${id}" /></td>
+    <td><select class="tbl-input" id="ei-type-${id}">${typeOptions}</select></td>
+    <td><input class="tbl-input" value="${h.institution}" id="ei-inst-${id}" /></td>
+    <td><input class="tbl-input" type="number" min="0" step="0.01" value="${h.value}" id="ei-val-${id}" style="text-align:right;" /></td>
+    <td><input class="tbl-input" value="${h.notes || ''}" id="ei-notes-${id}" placeholder="—" /></td>
+    <td style="text-align:center;white-space:nowrap;">
+      <button class="btn-edit btn-save" onclick="saveHolding(${id})">Save</button>
+      <button class="btn-delete" onclick="renderHoldings()" title="Cancel">×</button>
+    </td>
+  `;
+}
+
+async function saveHolding(id) {
+  const name        = document.getElementById(`ei-name-${id}`).value.trim();
+  const type        = document.getElementById(`ei-type-${id}`).value;
+  const institution = document.getElementById(`ei-inst-${id}`).value.trim();
+  const value       = parseFloat(document.getElementById(`ei-val-${id}`).value);
+  const notes       = document.getElementById(`ei-notes-${id}`).value.trim();
+
+  if (!name || !institution || isNaN(value) || value < 0) {
+    alert('Please fill in name, institution, and a valid value.');
+    return;
+  }
+
+  const saveBtn = document.querySelector(`#row-${id} .btn-save`);
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving…';
+
+  const ok = await updateHolding(id, { name, type, institution, value, notes });
+  if (!ok) {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+    alert('Failed to save. Check the browser console.');
+    return;
+  }
+
+  await loadHoldings();
+  renderHoldings();
+  renderDashboard();
 }
 
 async function removeHolding(id) {
