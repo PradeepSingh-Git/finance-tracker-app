@@ -142,7 +142,8 @@ function renderDebtBarChart() {
 
   const labels = Object.keys(instMap);
   const values = labels.map(k => Math.round(instMap[k]));
-  const colors = labels.map(() => '#D85A30');
+  const DEBT_COLORS = ['#D85A30', '#C0392B', '#E67E22', '#8E44AD', '#2980B9', '#16A085'];
+  const colors = labels.map((_, i) => DEBT_COLORS[i % DEBT_COLORS.length]);
 
   const card = document.getElementById('debt-bar-card');
   if (labels.length === 0) { card.style.display = 'none'; return; }
