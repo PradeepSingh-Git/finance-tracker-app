@@ -142,19 +142,43 @@ async function saveExtracted() {
   const institution = document.getElementById('ex-institution').value.trim();
   const value       = parseFloat(document.getElementById('ex-value').value);
   const notes       = document.getElementById('ex-notes').value.trim();
+  const saveBtn     = document.querySelector('#extracted-form-card .btn-primary');
+  const errEl       = document.getElementById('save-error');
+
+  if (errEl) errEl.remove();
 
   if (!name || !institution || isNaN(value) || value < 0) {
-    alert('Please fill in name, institution, and a valid value.');
+    showSaveError('Please fill in name, institution, and a valid positive value.');
     return;
   }
 
-  await addHolding({ name, type, institution, value, notes });
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving…';
 
-  document.getElementById('extracted-form-card').style.display = 'none';
-  document.getElementById('upload-result').innerHTML = `
-    <div class="ai-result" style="color:var(--c-accent-dark);">
-      <strong>✓ Saved to portfolio!</strong> Switch to the Dashboard to see your updated overview.
-    </div>`;
+  try {
+    const result = await addHolding({ name, type, institution, value, notes });
+    if (!result) throw new Error('Supabase insert failed — check the browser console.');
+
+    document.getElementById('extracted-form-card').style.display = 'none';
+    document.getElementById('upload-result').innerHTML = `
+      <div class="ai-result" style="color:var(--c-accent-dark);">
+        <strong>✓ Saved to portfolio!</strong> Switch to the Dashboard to see your updated overview.
+      </div>`;
+  } catch (err) {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save to portfolio';
+    showSaveError('Save failed: ' + err.message);
+  }
+}
+
+function showSaveError(msg) {
+  const actions = document.querySelector('#extracted-form-card .form-actions');
+  const div = document.createElement('div');
+  div.id = 'save-error';
+  div.className = 'auth-message auth-error';
+  div.style.marginTop = '8px';
+  div.textContent = msg;
+  actions.after(div);
 }
 
 // ── Utilities ──────────────────────────────────
