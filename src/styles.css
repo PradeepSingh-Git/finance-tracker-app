@@ -296,10 +296,11 @@ input:focus, select:focus, textarea:focus {
   background: var(--c-surface);
   border: 0.5px solid var(--c-border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin-bottom: 0.5rem;
 }
-.holdings-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.holdings-table table { width: 100%; min-width: 480px; border-collapse: collapse; font-size: 13px; }
 .holdings-table th {
   padding: 10px 12px;
   text-align: left;
@@ -308,10 +309,60 @@ input:focus, select:focus, textarea:focus {
   font-weight: 500;
   border-bottom: 0.5px solid var(--c-border);
   background: var(--c-bg);
+  white-space: nowrap;
 }
 .holdings-table td { padding: 10px 12px; border-bottom: 0.5px solid var(--c-border); color: var(--c-text); }
 .holdings-table tr:last-child td { border-bottom: none; }
 .holdings-table tr:hover td { background: var(--c-bg); }
+
+/* On small screens, collapse table into stacked cards */
+@media (max-width: 540px) {
+  .holdings-table { overflow-x: visible; }
+  .holdings-table table,
+  .holdings-table thead,
+  .holdings-table tbody,
+  .holdings-table th,
+  .holdings-table td,
+  .holdings-table tr { display: block; min-width: 0; }
+
+  .holdings-table thead { display: none; }
+
+  .holdings-table tbody tr {
+    background: var(--c-surface);
+    border-bottom: 0.5px solid var(--c-border);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .holdings-table tbody tr:last-child { border-bottom: none; }
+  .holdings-table tbody tr:hover { background: var(--c-bg); }
+
+  .holdings-table td {
+    padding: 0;
+    border: none;
+    font-size: 13px;
+  }
+
+  /* Label each cell with its column header via data-label */
+  .holdings-table td[data-label]::before {
+    content: attr(data-label) ": ";
+    font-size: 10px;
+    color: var(--c-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-right: 4px;
+  }
+  .holdings-table td[data-label="Name"]::before,
+  .holdings-table td[data-label="Actions"]::before { content: none; }
+
+  .holdings-table td[data-label="Actions"] {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+}
 
 .no-holdings { text-align: center; color: var(--c-muted); font-size: 13px; padding: 2rem; display: none; }
 
