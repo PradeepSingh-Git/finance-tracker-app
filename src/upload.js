@@ -160,9 +160,6 @@ async function saveExtracted() {
     const result = await addHolding({ name, type, institution, value, notes });
     if (!result) throw new Error('Insert failed — open the browser console for details.');
 
-    await loadHoldings();
-    renderDashboard();
-    renderRecent();
     saveBtn.disabled = false;
     saveBtn.textContent = 'Save to portfolio';
     document.getElementById('extracted-form-card').style.display = 'none';
@@ -170,6 +167,7 @@ async function saveExtracted() {
       <div class="ai-result" style="color:var(--c-accent-dark);">
         <strong>✓ Saved to portfolio!</strong> Switch to the Dashboard to see your updated overview.
       </div>`;
+    loadHoldings().then(() => { renderDashboard(); renderRecent(); });
   } catch (err) {
     saveBtn.disabled = false;
     saveBtn.textContent = 'Save to portfolio';

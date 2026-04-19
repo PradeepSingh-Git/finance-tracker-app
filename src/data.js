@@ -18,13 +18,18 @@ function setCurrentUser(userId, supabaseUrl, anonKey, accessToken) {
 
 // ── Persistence (Supabase) ─────────────────────
 async function loadHoldings() {
-  const { data, error } = await sbClient
-    .from('holdings')
-    .select('*')
-    .order('created_at', { ascending: true });
-
-  if (error) { console.error('loadHoldings:', error); return; }
-  holdings = data || [];
+  if (!_sbUrl) return;
+  const response = await fetch(
+    `${_sbUrl}/rest/v1/holdings?select=*&order=created_at.asc&user_id=eq.${_sbUserId}`,
+    {
+      headers: {
+        'apikey': _sbAnonKey,
+        'Authorization': `Bearer ${_sbAccessToken}`,
+      },
+    }
+  );
+  if (!response.ok) { console.error('loadHoldings HTTP error:', response.status); return; }
+  holdings = await response.json();
 }
 
 // Direct fetch for INSERT — bypasses the Supabase JS client's
