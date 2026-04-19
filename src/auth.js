@@ -105,7 +105,6 @@ async function startAuthenticatedSession(session) {
 
   setCurrentUser(session.user.id, SUPABASE_URL, SUPABASE_ANON_KEY, session.access_token);
   document.getElementById('auth-overlay').style.display = 'none';
-  document.getElementById('user-email').textContent = session.user.email;
 
   const rawName   = session.user.email.split('@')[0];
   const name      = rawName.charAt(0).toUpperCase() + rawName.slice(1);
