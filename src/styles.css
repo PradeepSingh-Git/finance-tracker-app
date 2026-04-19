@@ -296,10 +296,11 @@ input:focus, select:focus, textarea:focus {
   background: var(--c-surface);
   border: 0.5px solid var(--c-border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin-bottom: 0.5rem;
 }
-.holdings-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.holdings-table table { width: 100%; min-width: 480px; border-collapse: collapse; font-size: 13px; }
 .holdings-table th {
   padding: 10px 12px;
   text-align: left;
@@ -308,10 +309,12 @@ input:focus, select:focus, textarea:focus {
   font-weight: 500;
   border-bottom: 0.5px solid var(--c-border);
   background: var(--c-bg);
+  white-space: nowrap;
 }
 .holdings-table td { padding: 10px 12px; border-bottom: 0.5px solid var(--c-border); color: var(--c-text); }
 .holdings-table tr:last-child td { border-bottom: none; }
 .holdings-table tr:hover td { background: var(--c-bg); }
+
 
 .no-holdings { text-align: center; color: var(--c-muted); font-size: 13px; padding: 2rem; display: none; }
 

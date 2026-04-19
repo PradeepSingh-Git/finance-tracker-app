@@ -164,16 +164,16 @@ function renderHoldings() {
     const isLiability = h.type === 'debt' || h.type === 'loan';
     return `
       <tr>
-        <td>
+        <td data-label="Name">
           <span style="font-weight:500;">${h.name}</span>
           ${h.notes ? `<br><span style="font-size:11px;color:var(--c-muted);">${h.notes}</span>` : ''}
         </td>
-        <td><span class="type-badge badge-${h.type}">${h.type}</span></td>
-        <td>${h.institution}</td>
-        <td style="text-align:right;font-weight:500;color:${isLiability ? 'var(--c-debt)' : 'var(--c-text)'};">
+        <td data-label="Type"><span class="type-badge badge-${h.type}">${h.type}</span></td>
+        <td data-label="Institution">${h.institution}</td>
+        <td data-label="Value" style="text-align:right;font-weight:500;color:${isLiability ? 'var(--c-debt)' : 'var(--c-text)'};">
           ${isLiability ? '−' : ''}€${fmt(h.value)}
         </td>
-        <td style="text-align:center;">
+        <td data-label="Actions" style="text-align:center;">
           <button class="btn-delete" onclick="removeHolding(${h.id})" title="Delete entry">×</button>
         </td>
       </tr>
