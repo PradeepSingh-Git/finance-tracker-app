@@ -186,6 +186,43 @@ async function removeHolding(id) {
   renderHoldings();
 }
 
+// ── Profile panel ──────────────────────────────
+function toggleProfile() {
+  const panel   = document.getElementById('profile-panel');
+  const overlay = document.getElementById('profile-overlay');
+  const isOpen  = panel.classList.contains('open');
+  if (isOpen) {
+    closeProfile();
+  } else {
+    renderProfile();
+    panel.classList.add('open');
+    overlay.classList.add('open');
+  }
+}
+
+function closeProfile() {
+  document.getElementById('profile-panel').classList.remove('open');
+  document.getElementById('profile-overlay').classList.remove('open');
+}
+
+function renderProfile() {
+  const stats = [
+    { label: 'Net worth',    value: '€' + fmt(netWorth()),         color: netWorth() >= 0 ? 'var(--c-accent)' : 'var(--c-debt)' },
+    { label: 'Total assets', value: '€' + fmt(totalAssets()),      color: '' },
+    { label: 'Investments',  value: '€' + fmt(totalInvestments()), color: '' },
+    { label: 'Savings',      value: '€' + fmt(totalSavings()),     color: '' },
+    { label: 'Total debt',   value: '€' + fmt(totalLiabilities()), color: 'var(--c-debt)' },
+    { label: 'Holdings',     value: holdings.length + ' entries',  color: '' },
+  ];
+
+  document.getElementById('profile-stats').innerHTML = stats.map(s => `
+    <div class="profile-stat">
+      <span class="profile-stat-label">${s.label}</span>
+      <span class="profile-stat-value" style="color:${s.color || 'var(--c-text)'};">${s.value}</span>
+    </div>
+  `).join('');
+}
+
 // ── Init ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   initAuth();

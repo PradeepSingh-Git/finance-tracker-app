@@ -35,10 +35,7 @@
         <p class="header-sub" id="last-updated">Last updated just now</p>
       </div>
       <div class="header-actions">
-        <span id="user-email" class="user-email"></span>
-        <button class="btn-secondary" onclick="switchTab('add')">+ Add entry</button>
-        <button class="btn-secondary" onclick="switchTab('upload')">Upload photo</button>
-        <button id="signout-button" type="button" class="btn-secondary">Sign out</button>
+        <button class="avatar-btn" id="avatar-btn" onclick="toggleProfile()" aria-label="Profile"></button>
       </div>
     </header>
 
@@ -183,5 +180,22 @@
     </section>
 
   </div>
+
+  <!-- Profile panel -->
+  <div class="profile-overlay" id="profile-overlay" onclick="closeProfile()"></div>
+  <aside class="profile-panel" id="profile-panel">
+    <div class="profile-top">
+      <div class="profile-avatar-lg" id="profile-avatar-lg"></div>
+      <div>
+        <div class="profile-name" id="profile-name"></div>
+        <div class="profile-email" id="profile-email"></div>
+      </div>
+    </div>
+    <div class="profile-divider"></div>
+    <div class="profile-stats" id="profile-stats"></div>
+    <div class="profile-divider"></div>
+    <button class="btn-primary" style="width:100%;" onclick="logout()">Sign out</button>
+  </aside>
+
 </body>
 </html>

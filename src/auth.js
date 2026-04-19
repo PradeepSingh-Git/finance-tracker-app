@@ -82,8 +82,8 @@ function clearSupabaseSessionStorage() {
 function resetSignedOutUi() {
   authBootstrapped = false;
   holdings = [];
-  document.getElementById('user-email').textContent = '';
   document.getElementById('auth-overlay').style.display = 'flex';
+  document.getElementById('avatar-btn').textContent = '';
   showAuthScreen();
 }
 
@@ -107,12 +107,17 @@ async function startAuthenticatedSession(session) {
   document.getElementById('auth-overlay').style.display = 'none';
   document.getElementById('user-email').textContent = session.user.email;
 
-  const rawName    = session.user.email.split('@')[0];
-  const name       = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-  const hour       = new Date().getHours();
-  const timeOfDay  = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night';
-  document.getElementById('greeting').textContent       = `${timeOfDay}, ${name}!`;
+  const rawName   = session.user.email.split('@')[0];
+  const name      = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+  const hour      = new Date().getHours();
+  const timeOfDay = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night';
+
+  document.getElementById('greeting').textContent        = `${timeOfDay}, ${name}!`;
   document.getElementById('portfolio-title').textContent = `${name}'s Portfolio`;
+  document.getElementById('avatar-btn').textContent      = name.charAt(0).toUpperCase();
+  document.getElementById('profile-avatar-lg').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('profile-name').textContent   = name;
+  document.getElementById('profile-email').textContent  = session.user.email;
 
   // Show the dashboard shell immediately, then hydrate it once holdings finish loading.
   switchTab('dashboard');
