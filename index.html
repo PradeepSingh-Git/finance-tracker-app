@@ -66,10 +66,17 @@
         </div>
       </div>
       <div class="chart-card" style="margin-bottom:1rem;">
-        <p class="chart-title">By institution</p>
+        <p class="chart-title">Assets by institution</p>
         <div id="bar-legend" class="legend-row"></div>
         <div style="position:relative;height:140px;">
-          <canvas id="barChart" role="img" aria-label="Bar chart showing value by institution">Institution breakdown</canvas>
+          <canvas id="barChart" role="img" aria-label="Bar chart showing asset value by institution">Institution breakdown</canvas>
+        </div>
+      </div>
+      <div class="chart-card" id="debt-bar-card" style="margin-bottom:1rem;display:none;">
+        <p class="chart-title">Debt &amp; loans by institution</p>
+        <div id="debt-bar-legend" class="legend-row"></div>
+        <div style="position:relative;height:140px;">
+          <canvas id="debtBarChart" role="img" aria-label="Bar chart showing debt by institution">Debt breakdown</canvas>
         </div>
       </div>
       <div class="card">
