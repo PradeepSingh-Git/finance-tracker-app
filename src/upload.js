@@ -155,9 +155,16 @@ async function saveExtracted() {
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving…';
 
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Request timed out — check your network and try again.')), 15000)
+  );
+
   try {
-    const result = await addHolding({ name, type, institution, value, notes });
-    if (!result) throw new Error('Supabase insert failed — check the browser console.');
+    const result = await Promise.race([
+      addHolding({ name, type, institution, value, notes }),
+      timeout,
+    ]);
+    if (!result) throw new Error('Insert failed — open the browser console for details.');
 
     document.getElementById('extracted-form-card').style.display = 'none';
     document.getElementById('upload-result').innerHTML = `
