@@ -71,6 +71,39 @@ async function addHolding(entry) {
   }
 }
 
+async function updateHolding(id, fields) {
+  if (!_sbUserId || !_sbUrl) { console.error('updateHolding: user not initialised'); return null; }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    const response = await fetch(
+      `${_sbUrl}/rest/v1/holdings?id=eq.${id}&user_id=eq.${_sbUserId}`,
+      {
+        method: 'PATCH',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': _sbAnonKey,
+          'Authorization': `Bearer ${_sbAccessToken}`,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify(fields),
+      }
+    );
+    clearTimeout(timer);
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      console.error('updateHolding HTTP error:', response.status, err);
+      return null;
+    }
+    return true;
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.name === 'AbortError') throw new Error('Network request timed out after 20 s');
+    throw err;
+  }
+}
+
 async function deleteHolding(id) {
   const { error } = await sbClient.from('holdings').delete().eq('id', id);
   if (error) { console.error('deleteHolding:', error); return; }
