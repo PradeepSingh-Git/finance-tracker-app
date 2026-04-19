@@ -166,11 +166,15 @@ async function saveExtracted() {
     ]);
     if (!result) throw new Error('Insert failed — open the browser console for details.');
 
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save to portfolio';
     document.getElementById('extracted-form-card').style.display = 'none';
     document.getElementById('upload-result').innerHTML = `
       <div class="ai-result" style="color:var(--c-accent-dark);">
         <strong>✓ Saved to portfolio!</strong> Switch to the Dashboard to see your updated overview.
       </div>`;
+    renderDashboard();
+    renderRecent();
   } catch (err) {
     saveBtn.disabled = false;
     saveBtn.textContent = 'Save to portfolio';
