@@ -5,7 +5,7 @@
 // ── Config ─────────────────────────────────────
 // The API key is injected by the Claude.ai environment when running inside an artifact.
 // When self-hosting, set your key here or via an environment variable on the server.
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
+const ANTHROPIC_API_URL = '/api/analyze';
 const CLAUDE_MODEL      = 'claude-sonnet-4-20250514';
 
 const EXTRACTION_PROMPT = `You are a financial document analyzer.
