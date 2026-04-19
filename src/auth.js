@@ -81,29 +81,24 @@ async function logout() {
 async function initAuth() {
   initSupabase();
 
+  let sessionStarted = false;
+
   sbClient.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN') {
+    if (session && !sessionStarted) {
+      sessionStarted = true;
       document.getElementById('auth-overlay').style.display = 'none';
       document.getElementById('user-email').textContent = session.user.email;
       await loadHoldings();
       renderRecent();
-      setTimeout(renderDashboard, 50);
+      setTimeout(renderDashboard, 100);
     } else if (event === 'SIGNED_OUT') {
+      sessionStarted = false;
       holdings = [];
       document.getElementById('user-email').textContent = '';
       document.getElementById('auth-overlay').style.display = 'flex';
       showAuthScreen();
+    } else if (!session && !sessionStarted) {
+      showAuthScreen();
     }
   });
-
-  const { data: { session } } = await sbClient.auth.getSession();
-  if (session) {
-    document.getElementById('auth-overlay').style.display = 'none';
-    document.getElementById('user-email').textContent = session.user.email;
-    await loadHoldings();
-    renderRecent();
-    setTimeout(renderDashboard, 50);
-  } else {
-    showAuthScreen();
-  }
 }
