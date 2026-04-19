@@ -2,63 +2,16 @@
    auth.js — Supabase client & auth UI
    ============================================= */
 
-// window.supabase is the CDN library; sbClient is our initialized instance
+// ── YOUR SUPABASE PROJECT CREDENTIALS ─────────
+// Find these in: Supabase dashboard → Settings → API
+const SUPABASE_URL      = 'https://xzupmitftejwcndnxrth.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6dXBtaXRmdGVqd2NuZG54cnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1ODQ3MTgsImV4cCI6MjA5MjE2MDcxOH0.kjm_Aav6w_EIEvBUsC7-5o7ZyBKA0eLh-4fUfOrPNWQ';
+// ──────────────────────────────────────────────
+
 let sbClient = null;
 
-function getSupabaseConfig() {
-  return {
-    url: localStorage.getItem('sb_url') || '',
-    key: localStorage.getItem('sb_key') || '',
-  };
-}
-
-function initSupabase(url, key) {
-  sbClient = window.supabase.createClient(url, key);
-}
-
-// ── Setup Screen ───────────────────────────────
-function showSetupScreen() {
-  document.getElementById('auth-overlay').innerHTML = `
-    <div class="auth-card">
-      <h2 class="auth-title">Connect Supabase</h2>
-      <p class="auth-sub">Enter your Supabase project credentials. Find these in your project dashboard under Settings → API.</p>
-      <div class="form-group">
-        <label>Project URL</label>
-        <input type="text" id="sb-url" placeholder="https://your-project.supabase.co" />
-      </div>
-      <div class="form-group" style="margin-top:12px;">
-        <label>Anon / Public Key</label>
-        <input type="text" id="sb-key" placeholder="eyJhbGci…" />
-      </div>
-      <div id="setup-error" class="auth-message auth-error" style="display:none;"></div>
-      <button class="btn-primary" style="margin-top:1rem;width:100%;" onclick="saveSupabaseConfig()">Connect</button>
-    </div>
-  `;
-}
-
-async function saveSupabaseConfig() {
-  const url   = document.getElementById('sb-url').value.trim();
-  const key   = document.getElementById('sb-key').value.trim();
-  const errEl = document.getElementById('setup-error');
-  errEl.style.display = 'none';
-
-  if (!url || !key) {
-    errEl.textContent = 'Please enter both the project URL and anon key.';
-    errEl.style.display = 'block';
-    return;
-  }
-
-  try {
-    initSupabase(url, key);
-    const { error } = await sbClient.from('holdings').select('id').limit(1);
-    if (error && error.code !== 'PGRST116') throw error;
-    localStorage.setItem('sb_url', url);
-    localStorage.setItem('sb_key', key);
-    showAuthScreen();
-  } catch (err) {
-    errEl.textContent = 'Could not connect: ' + (err.message || 'Check your URL and key.');
-    errEl.style.display = 'block';
-  }
+function initSupabase() {
+  sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
 // ── Auth Screen ────────────────────────────────
@@ -119,75 +72,37 @@ function setAuthMessage(text, isError = false) {
   el.style.display = text ? 'block' : 'none';
 }
 
-function clearSupabaseSessionStorage() {
-  Object.keys(localStorage)
-    .filter(key => key.startsWith('sb-') && key.endsWith('-auth-token'))
-    .forEach(key => localStorage.removeItem(key));
-}
-
-let authBootstrapped = false;
-
-function resetSignedOutUi() {
-  authBootstrapped = false;
-  holdings = [];
-  document.getElementById('user-email').textContent = '';
-  document.getElementById('auth-overlay').style.display = 'flex';
-  showAuthScreen();
-}
-
-async function signOutUser() {
-  if (!sbClient) return;
-
-  clearSupabaseSessionStorage();
-  resetSignedOutUi();
-
-  // Attempt the official sign-out in the background, but don't block the UI on it.
-  sbClient.auth.signOut({ scope: 'local' }).catch(err => {
-    console.error('signOutUser:', err);
-  });
-}
-
-async function startAuthenticatedSession(session) {
-  if (!session || authBootstrapped) return;
-  authBootstrapped = true;
-
-  document.getElementById('auth-overlay').style.display = 'none';
-  document.getElementById('user-email').textContent = session.user.email;
-
-  // Show the dashboard shell immediately, then hydrate it once holdings finish loading.
-  switchTab('dashboard');
-
-  await loadHoldings();
-  renderRecent();
-  renderDashboard();
-  setTimeout(renderDashboard, 120);
+async function logout() {
+  if (sbClient) await sbClient.auth.signOut();
+  window.location.reload();
 }
 
 // ── Init ───────────────────────────────────────
 async function initAuth() {
-  const { url, key } = getSupabaseConfig();
-  const signOutButton = document.getElementById('signout-button');
-
-  if (signOutButton) signOutButton.onclick = signOutUser;
-
-  if (!url || !key) {
-    showSetupScreen();
-    return;
-  }
-
-  initSupabase(url, key);
+  initSupabase();
 
   sbClient.auth.onAuthStateChange(async (event, session) => {
-    if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && session) {
-      await startAuthenticatedSession(session);
+    if (event === 'SIGNED_IN') {
+      document.getElementById('auth-overlay').style.display = 'none';
+      document.getElementById('user-email').textContent = session.user.email;
+      await loadHoldings();
+      renderRecent();
+      setTimeout(renderDashboard, 50);
     } else if (event === 'SIGNED_OUT') {
-      resetSignedOutUi();
+      holdings = [];
+      document.getElementById('user-email').textContent = '';
+      document.getElementById('auth-overlay').style.display = 'flex';
+      showAuthScreen();
     }
   });
 
   const { data: { session } } = await sbClient.auth.getSession();
   if (session) {
-    await startAuthenticatedSession(session);
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('user-email').textContent = session.user.email;
+    await loadHoldings();
+    renderRecent();
+    setTimeout(renderDashboard, 50);
   } else {
     showAuthScreen();
   }
