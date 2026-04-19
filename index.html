@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finance Tracker</title>
+  <link rel="stylesheet" href="src/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" defer></script>
+  <script src="src/auth.js" defer></script>
+  <script src="src/data.js" defer></script>
+  <script src="src/charts.js" defer></script>
+  <script src="src/upload.js" defer></script>
+  <script src="src/app.js" defer></script>
+</head>
+<body>
+
+  <!-- Auth overlay — shown until user is signed in -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-card">
+      <div class="ai-loading" style="justify-content:center;padding:1rem 0;">
+        <div class="spinner"></div>
+        Loading…
+      </div>
+    </div>
+  </div>
+
+  <div class="app">
+
+    <!-- Header -->
+    <header class="header">
+      <div>
+        <h1 class="header-title">My Portfolio</h1>
+        <p class="header-sub" id="last-updated">Last updated just now</p>
+      </div>
+      <div class="header-actions">
+        <span id="user-email" class="user-email"></span>
+        <button class="btn-secondary" onclick="switchTab('add')">+ Add entry</button>
+        <button class="btn-secondary" onclick="switchTab('upload')">Upload photo</button>
+        <button id="signout-button" type="button" class="btn-secondary">Sign out</button>
+      </div>
+    </header>
+
+    <!-- Tabs -->
+    <nav class="tabs">
+      <button class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</button>
+      <button class="tab" data-tab="add" onclick="switchTab('add')">Add entry</button>
+      <button class="tab" data-tab="upload" onclick="switchTab('upload')">Upload & scan</button>
+      <button class="tab" data-tab="holdings" onclick="switchTab('holdings')">All holdings</button>
+    </nav>
+
+    <!-- DASHBOARD -->
+    <section class="section active" id="tab-dashboard">
+      <div class="metrics" id="metrics-grid"></div>
+      <div class="chart-row">
+        <div class="chart-card">
+          <p class="chart-title">Asset allocation</p>
+          <div id="alloc-legend" class="legend-row"></div>
+          <div class="chart-wrap">
+            <canvas id="pieChart" role="img" aria-label="Donut chart showing asset allocation">Portfolio allocation</canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <p class="chart-title">Portfolio value over time</p>
+          <div class="chart-wrap">
+            <canvas id="lineChart" role="img" aria-label="Line chart showing net worth trend">Net worth trend</canvas>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:1rem;">
+        <p class="chart-title">By institution</p>
+        <div id="bar-legend" class="legend-row"></div>
+        <div style="position:relative;height:140px;">
+          <canvas id="barChart" role="img" aria-label="Bar chart showing value by institution">Institution breakdown</canvas>
+        </div>
+      </div>
+      <div class="card">
+        <p class="chart-title">Net worth breakdown</p>
+        <div id="networth-breakdown"></div>
+      </div>
+    </section>
+
+    <!-- ADD ENTRY -->
+    <section class="section" id="tab-add">
+      <div id="toast-success" class="toast-success">Entry added successfully!</div>
+      <div class="card">
+        <p class="card-title">New financial entry</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Entry name</label>
+            <input type="text" id="f-name" placeholder="e.g. S&P 500 ETF" />
+          </div>
+          <div class="form-group">
+            <label>Type</label>
+            <select id="f-type">
+              <option value="investment">Investment</option>
+              <option value="savings">Savings</option>
+              <option value="debt">Credit card / Debt</option>
+              <option value="loan">Loan</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Institution</label>
+            <input type="text" id="f-institution" placeholder="e.g. Vanguard, ING, DKB" />
+          </div>
+          <div class="form-group">
+            <label>Value (€)</label>
+            <input type="number" id="f-value" placeholder="0.00" min="0" step="0.01" />
+          </div>
+          <div class="form-group full">
+            <label>Notes (optional)</label>
+            <input type="text" id="f-notes" placeholder="Account number, ISIN, description..." />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" onclick="addEntry()">Add entry</button>
+          <button class="btn-secondary" onclick="switchTab('upload')">Or scan a document</button>
+        </div>
+      </div>
+      <div class="card" id="recent-entries-card">
+        <p class="card-title">Recent entries</p>
+        <div id="recent-list"></div>
+      </div>
+    </section>
+
+    <!-- UPLOAD & SCAN -->
+    <section class="section" id="tab-upload">
+      <div class="card">
+        <p class="card-title">Scan a document with AI</p>
+        <p class="card-sub">Upload a photo of a bank statement, brokerage report, or loan document. Claude will extract the financial details automatically.</p>
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" accept="image/*" onchange="handleFileUpload(event)" />
+          <div class="upload-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <p class="upload-title">Drop or click to upload</p>
+          <p class="upload-sub">JPG, PNG, HEIC up to 10MB</p>
+        </div>
+        <div id="upload-result" style="margin-top:1rem;"></div>
+      </div>
+      <div class="card" id="extracted-form-card" style="display:none;">
+        <p class="card-title">Extracted details — review and save</p>
+        <div class="form-grid" id="extracted-form-grid"></div>
+        <div class="form-actions" style="margin-top:1rem;">
+          <button class="btn-primary" onclick="saveExtracted()">Save to portfolio</button>
+          <button class="btn-secondary" onclick="document.getElementById('extracted-form-card').style.display='none'">Dismiss</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ALL HOLDINGS -->
+    <section class="section" id="tab-holdings">
+      <div class="filter-row">
+        <select id="filter-type" onchange="renderHoldings()">
+          <option value="">All types</option>
+          <option value="investment">Investments</option>
+          <option value="savings">Savings</option>
+          <option value="debt">Debts</option>
+          <option value="loan">Loans</option>
+        </select>
+        <input type="text" id="filter-search" placeholder="Search by name or institution..." onkeyup="renderHoldings()" />
+      </div>
+      <div class="holdings-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Institution</th>
+              <th style="text-align:right;">Value (€)</th>
+              <th style="text-align:center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="holdings-body"></tbody>
+        </table>
+      </div>
+      <p id="no-holdings" class="no-holdings">No entries yet. Add one manually or scan a document.</p>
+    </section>
+
+  </div>
+</body>
+</html>
